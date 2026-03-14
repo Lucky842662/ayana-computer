@@ -170,7 +170,7 @@ function AdminLogin({ onLogin }) {
 
 // ── PRODUCT FORM MODAL ────────────────────────────────────────────────────────
 function ProductModal({ product, onSave, onClose }) {
-  const empty = { name: "", tag: "", brand: "HP", price: "", original: "", category: "Laptops", specs: "", ram: "", rom: "", color: "#00F5A0", active: true };
+  const empty = { name: "", tag: "", brand: "HP", price: "", original: "", category: "Laptops", specs: "", ram: "", rom: "", img: "", color: "#00F5A0", active: true };
   const [form, setForm] = useState(product || empty);
   const [errors, setErrors] = useState({});
 
@@ -243,6 +243,38 @@ function ProductModal({ product, onSave, onClose }) {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             {field("price", "Selling Price (₹) *", "number", "20000")}
             {field("original", "MRP / Original Price (₹) *", "number", "35000")}
+          </div>
+          {/* Image Upload */}
+          <div>
+            <label style={{ display: "block", fontSize: 11, color: "#6B7280", fontFamily: "monospace", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 7 }}>Product Image</label>
+            <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+              {/* Preview */}
+              <div style={{ width: 80, height: 60, borderRadius: 8, background: "#0E1318", border: "1px solid rgba(255,255,255,0.08)", flexShrink: 0, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {form.img ? <img src={form.img} alt="preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <Laptop size={24} style={{ color: form.color || "#00F5A0", opacity: 0.5 }} />}
+              </div>
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
+                {/* File upload */}
+                <label style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", background: "#0E1318", border: "1px dashed rgba(255,255,255,0.15)", borderRadius: 8, cursor: "pointer", fontSize: 12, color: "#9CA3AF" }}>
+                  <Plus size={13} /> Upload from device
+                  <input type="file" accept="image/*" style={{ display: "none" }} onChange={e => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = ev => setForm({ ...form, img: ev.target.result });
+                    reader.readAsDataURL(file);
+                  }} />
+                </label>
+                {/* URL input */}
+                <input
+                  type="url"
+                  value={form.img && form.img.startsWith("data:") ? "" : form.img}
+                  onChange={e => setForm({ ...form, img: e.target.value })}
+                  placeholder="Or paste image URL..."
+                  style={{ width: "100%", padding: "8px 10px", background: "#0E1318", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, fontSize: 12, color: "white", boxSizing: "border-box" }}
+                />
+                {form.img && <button type="button" onClick={() => setForm({ ...form, img: "" })} style={{ alignSelf: "flex-start", fontSize: 11, color: "#EF4444", background: "none", border: "none", cursor: "pointer", padding: 0 }}>✕ Remove image</button>}
+              </div>
+            </div>
           </div>
           <div>
             <label style={{ display: "block", fontSize: 11, color: "#6B7280", fontFamily: "monospace", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 7 }}>Accent Color</label>
@@ -377,8 +409,8 @@ function AdminPanel({ products, onUpdate, onLogout }) {
             const disc = p.original > p.price ? Math.round((1 - p.price / p.original) * 100) : 0;
             return (
               <div key={p.id} style={{ background: "#141A22", border: `1px solid ${p.active ? "rgba(255,255,255,0.07)" : "rgba(239,68,68,0.15)"}`, borderRadius: 14, overflow: "hidden", opacity: p.active ? 1 : 0.6, transition: "all 0.3s" }} className="card-hover">
-                <div style={{ background: "#0E1318", padding: 16, height: 120, display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
-                  <LaptopSVG color={p.color || "#00F5A0"} />
+                <div style={{ background: "#0E1318", height: 120, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
+                  {p.img ? <img src={p.img} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ padding: 16, width: "100%" }}><LaptopSVG color={p.color || "#00F5A0"} /></div>}
                   {!p.active && <div style={{ position: "absolute", top: 8, left: 8, background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 6, padding: "2px 8px", fontSize: 10, color: "#EF4444", fontFamily: "monospace" }}>Hidden</div>}
                   {disc > 0 && <div style={{ position: "absolute", top: 8, right: 8, background: "linear-gradient(135deg,#00F5A0,#C8F53C)", color: "#090C10", fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 4 }}>-{disc}%</div>}
                 </div>
@@ -657,8 +689,8 @@ function Products({ products, onAddCart }) {
           <p style={{ color: "#6B7280", fontSize: 14, maxWidth: 480, margin: "0 auto" }}>Premium refurbished laptops — quality tested, warranty backed, prices you'll love.</p>
         </div>
 
-        {/* Search + Sort Bar */}
-        <div className="anim" style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap", alignItems: "center" }}>
+        {/* Search + Sort Bar — position:relative + zIndex so dropdown floats above cards */}
+        <div className="anim" style={{ position: "relative", zIndex: 20, display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap", alignItems: "center" }}>
           {/* Search */}
           <div style={{ position: "relative", flex: 1, minWidth: 220 }}>
             <Search size={13} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#4B5563" }} />
@@ -675,13 +707,13 @@ function Products({ products, onAddCart }) {
           </div>
 
           {/* Sort dropdown */}
-          <div style={{ position: "relative" }}>
+          <div style={{ position: "relative", zIndex: 30 }}>
             <button onClick={() => { setSortOpen(!sortOpen); setFiltersOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 14px", background: sortBy !== "default" ? "rgba(0,245,160,0.08)" : "#141A22", border: `1px solid ${sortBy !== "default" ? "rgba(0,245,160,0.3)" : "rgba(255,255,255,0.08)"}`, borderRadius: 10, fontSize: 12, color: sortBy !== "default" ? "#00F5A0" : "#9CA3AF", cursor: "pointer", whiteSpace: "nowrap" }}>
               <ArrowUpDown size={13} /> {sortOptions.find(s => s.key === sortBy)?.label || "Sort by"}
               <ChevronDown size={12} style={{ transform: sortOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
             </button>
             {sortOpen && (
-              <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, background: "#141A22", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: 6, zIndex: 30, minWidth: 200, boxShadow: "0 12px 40px rgba(0,0,0,0.5)" }} className="fade-in">
+              <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, background: "#141A22", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: 6, zIndex: 999, minWidth: 200, boxShadow: "0 16px 48px rgba(0,0,0,0.7)" }} className="fade-in">
                 {sortOptions.map(s => (
                   <button key={s.key} onClick={() => { setSortBy(s.key); setSortOpen(false); }} style={{ display: "block", width: "100%", textAlign: "left", padding: "9px 12px", background: sortBy === s.key ? "rgba(0,245,160,0.1)" : "none", color: sortBy === s.key ? "#00F5A0" : "#9CA3AF", border: "none", borderRadius: 6, fontSize: 13, cursor: "pointer" }}>
                     {s.label}
@@ -802,11 +834,15 @@ function Products({ products, onAddCart }) {
           {filtered.map((p, i) => {
             const disc = p.original > p.price ? Math.round((1 - p.price / p.original) * 100) : 0;
             return (
-              <div key={p.id} className="anim card-hover" style={{ borderRadius: 16, overflow: "hidden", background: "#141A22", border: "1px solid rgba(255,255,255,0.06)", transitionDelay: `${i * 40}ms` }}>
-                <div style={{ background: "#0E1318", padding: 16, height: 140, display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
-                  <LaptopSVG color={p.color || "#00F5A0"} />
+              <div key={p.id} className="card-hover" style={{ borderRadius: 16, overflow: "hidden", background: "#141A22", border: "1px solid rgba(255,255,255,0.06)", opacity: 1, transform: "none" }}>
+                <div style={{ background: "#0E1318", height: 150, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
+                  {p.img ? (
+                    <img src={p.img} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ) : (
+                    <div style={{ padding: 16, width: "100%" }}><LaptopSVG color={p.color || "#00F5A0"} /></div>
+                  )}
                   {disc > 0 && <span style={{ position: "absolute", top: 10, left: 10, background: "linear-gradient(135deg,#00F5A0,#C8F53C)", color: "#090C10", fontSize: 10, fontWeight: 700, padding: "3px 7px", borderRadius: 4 }}>-{disc}%</span>}
-                  <span style={{ position: "absolute", top: 10, right: 10, background: "rgba(14,19,24,0.8)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, padding: "2px 8px", fontSize: 10, color: "#9CA3AF" }}>{p.brand}</span>
+                  <span style={{ position: "absolute", top: 10, right: 10, background: "rgba(14,19,24,0.85)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, padding: "2px 8px", fontSize: 10, color: "#9CA3AF" }}>{p.brand}</span>
                 </div>
                 <div style={{ padding: 16 }}>
                   <h3 style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: 13, color: "white", marginBottom: 4, lineHeight: 1.3 }}>{p.name}</h3>
@@ -825,7 +861,7 @@ function Products({ products, onAddCart }) {
                   )}
 
                   <p style={{ fontSize: 11, color: "#4B5563", marginBottom: 12, lineHeight: 1.5 }}>{p.specs}</p>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 12 }}>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
                     <span style={{ fontFamily: "monospace", fontWeight: 700, color: "white", fontSize: 16 }}>₹{Number(p.price).toLocaleString()}</span>
                     <span style={{ fontSize: 11, color: "#374151", textDecoration: "line-through" }}>₹{Number(p.original).toLocaleString()}</span>
                     {disc > 0 && <span style={{ fontSize: 10, color: "#00F5A0", fontWeight: 600 }}>Save ₹{(p.original - p.price).toLocaleString()}</span>}
